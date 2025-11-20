@@ -1,3 +1,4 @@
+SOIUGNSOGIN
 * Get /wagon_race - opens the intro page of the website
 * Get /wagon_race/events - set up a SSE stream for push updates. Each update is a JSON-encoded string of gameid and action 
 * Get /wagon_race/game - returns info about the current game using url encoded data
