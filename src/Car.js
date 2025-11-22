@@ -1,21 +1,24 @@
 /**This is Code for "Italian Car" object and its properties */
-
-// Preset configurations for different kart types. Taken from form submission before joining game.
+//Might have to add more properties later on like drift, and direction later on(can def as a normal vector based on user input )
+// Preset configurations for different kart types. Taken from form submission before joining game.(Can move to seperate file for cleaner code)
 const KART_PRESETS = {
   light:  { handling: 0.9, acceleration: 0.18, maxSpeed: 4.4 },
   medium: { handling: 0.7, acceleration: 0.15, maxSpeed: 5.0 },
   heavy:  { handling: 0.5, acceleration: 0.12, maxSpeed: 5.6 }
 };
 
-class ItalianCar {
+
+export default class ItalianCar {
         #color;
         #type;
+        #theta; // direction angle
         #handling;
         #acceleration;
         #maxSpeed;
         #currentSpeed;
         #x;
         #y;
+        #coins; //def the speedboost
     constructor(color, type) {
         this.#color = color;
         if (!KART_PRESETS[type]) {
@@ -29,34 +32,43 @@ class ItalianCar {
         this.#currentSpeed = 0;
         this.#x = 0; // Initial X position  --- NOT SURE WHERE WE NEED TO SET THIS BUT YEA
         this.#y = 0; // Initial Y position  --- NOT SURE WHERE WE NEED TO SET THIS BUT YEA
+        this.#coins = 0;
+        this.#theta = 0; // initial direction angle ---MIGHT have to change to 90. Depends on how we implement certain things
     }
-    getColor() {
+    get color() {
         return this.#color;
     }
-    getType() {
+    get type() {
         return this.#type;
     }
-    getHandling() {
+    get handling() {
         return this.#handling;
     }
-    getAcceleration() {
+    get acceleration() {
         return this.#acceleration;
     }
-    getMaxSpeed() {
+    get maxSpeed() {
         return this.#maxSpeed;
     }
-    getCurrentSpeed() {
+    get currentSpeed() {
         return this.#currentSpeed;
     }
-    setCurrentSpeed(speed) {
+    set currentSpeed(speed) {
         this.#currentSpeed = Math.min(speed, this.#maxSpeed);
     }
-    getPosition() {
+    get position() {
         return { x: this.#x, y: this.#y };
     }   
-    setPosition(x, y) {
+    setPosition(x, y) {  //We can seperate set X, Y or input Array, one choice to make tru set/get.
         this.#x = x;
         this.#y = y;
     }
+    get coins(){
+        return this.#coins;
+    }
+    set coins(num){
+        this.#coins = num;
+    }
     
 }
+
