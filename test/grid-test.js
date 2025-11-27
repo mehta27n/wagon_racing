@@ -5,7 +5,7 @@ import {
   RenderClass,
   Shader,
   Vec3,
-} from "../dist/render/index.js";
+} from "../src/render/index";
 
 const canvas = document.getElementById("grid-test-canvas");
 

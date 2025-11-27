@@ -1,0 +1,70 @@
+import { Mat4, Vec3 } from "../math";
+import { RenderInstance } from "../RenderInstance";
+import { RenderClass } from "../RenderClass";
+import { Shader } from "../Shader";
+export class UnlitSolidInstance extends RenderInstance {
+    color;
+    constructor(translation = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1], color = [1, 1, 1]) {
+        super(translation, rotation, scale);
+        this.color = Vec3.from(color);
+    }
+}
+export class UnlitSolidClass extends RenderClass {
+    vertexSource = `#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPosition;
+    in mat4 aModel;
+    in vec3 aInstanceColor;
+    uniform mat4 uViewProj;
+    out vec3 vColor;
+    void main() {
+      vColor = aInstanceColor;
+      gl_Position = uViewProj * aModel * vec4(aPosition, 1.0);
+    }`;
+    fragmentSource = `#version 300 es
+    precision highp float;
+    in vec3 vColor;
+    out vec4 fragColor;
+    void main() {
+      fragColor = vec4(vColor, 1.0);
+    }`;
+    shader = new Shader(this.gl, this.vertexSource, this.fragmentSource);
+    instanceFloats = 16 + 3;
+    setupVertexAttribs() {
+        const gl = this.gl;
+        const posAttrib = this.shader.getAttribLocation("aPosition");
+        gl.enableVertexAttribArray(posAttrib);
+        gl.vertexAttribPointer(posAttrib, 3, gl.FLOAT, false, 3 * 4, 0);
+    }
+    setupInstanceAttribs() {
+        const gl = this.gl;
+        const modelAttrib = this.shader.getAttribLocation("aModel");
+        const colorAttrib = this.shader.getAttribLocation("aInstanceColor");
+        for (let i = 0; i < 4; i++) {
+            const loc = modelAttrib + i;
+            gl.enableVertexAttribArray(loc);
+            gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, this.instanceFloats * 4, i * 16);
+            gl.vertexAttribDivisor(loc, 1);
+        }
+        gl.enableVertexAttribArray(colorAttrib);
+        gl.vertexAttribPointer(colorAttrib, 3, gl.FLOAT, false, this.instanceFloats * 4, 16 * 4);
+        gl.vertexAttribDivisor(colorAttrib, 1);
+    }
+    setUniforms(camera) {
+        let viewProj = Mat4.viewProjectionFromOptions(camera);
+        this.shader.uniformMat4("uViewProj", viewProj);
+    }
+    pack(instance, data, offset) {
+        this.writeMatrixToInstanceBuffer(data, offset, instance.modelMatrix);
+        data.set(instance.color.elements, offset + 16);
+    }
+    // packs row-major matrix into column-major buffer
+    writeMatrixToInstanceBuffer(buffer, offset, matrix) {
+        const elements = matrix.elements;
+        for (let column = 0; column < 4; column += 1) {
+            for (let row = 0; row < 4; row += 1) {
+                buffer[offset++] = elements[row * 4 + column];
+            }
+        }
+    }
+}
