@@ -7,6 +7,7 @@ export class RenderClass {
     vao;
     instanceBuffer;
     instances = [];
+    instanceData = new Float32Array(0);
     constructor(gl, mesh) {
         this.gl = gl;
         this.mesh = mesh;
@@ -38,15 +39,14 @@ export class RenderClass {
         const gl = this.gl;
         this.shader.use();
         this.setUniforms(uniform);
-        //todo: reuse buffers
-        const data = new Float32Array(count * instanceFloats);
+        this.adjustInstanceBufferSize();
         let offset = 0;
         for (const instance of this.instances) {
-            this.pack(instance, data, offset);
+            this.pack(instance, this.instanceData, offset);
             offset += instanceFloats;
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.instanceData.subarray(0, count * instanceFloats));
         gl.bindVertexArray(this.vao);
         this.mesh.drawInstanced(count);
         if (STATELESS_BINDS)
@@ -62,6 +62,21 @@ export class RenderClass {
         if (STATELESS_BINDS) {
             gl.bindVertexArray(null);
             Mesh.unbind(gl);
+        }
+    }
+    adjustInstanceBufferSize() {
+        const gl = this.gl;
+        const capacity = this.instanceData.length / this.instanceFloats();
+        const used = this.instances.length;
+        if (used > capacity || used < capacity * 0.25) {
+            const newCapacity = Math.max(1, Math.ceil(used * 1.5));
+            const floats = newCapacity * this.instanceFloats();
+            const bytes = floats * 4;
+            this.instanceData = new Float32Array(floats);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, bytes, gl.DYNAMIC_DRAW);
+            if (STATELESS_BINDS)
+                gl.bindBuffer(gl.ARRAY_BUFFER, null);
         }
     }
 }
